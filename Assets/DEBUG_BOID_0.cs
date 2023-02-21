@@ -6,11 +6,6 @@ public class DEBUG_BOID_0 : MonoBehaviour
 {
 
 	//// .................. ////
-	[Range(0f, 1f)]
-	public float align = 1f, attract = 1f;
-
-
-
 
 	private void Update()
 	{
@@ -25,6 +20,17 @@ public class DEBUG_BOID_0 : MonoBehaviour
 
 
 
+
+	[Range(0.05f, 0.5f)]
+	public float radius_algn = 0.20f,
+				 radius_sepr = 0.22f,
+				 radius_attr = 0.25f;
+
+	[Header("weight")]
+	[Range(0.05f, 1f)]
+	public float weight_algn = 0.30f,
+				 weight_sepr = 0.89f,
+				 weight_attr = 0.90f;
 
 
 
@@ -64,8 +70,26 @@ public class DEBUG_BOID_0 : MonoBehaviour
 
 		}
 
+
+		#region obj_s_boids_radius
+
+		OBJ_S boid_rad_algn = new OBJ_S("rad_algn", -1);
+		OBJ_S boid_rad_attr = new OBJ_S("rad_attr", -2);
+		OBJ_S boid_rad_sepr = new OBJ_S("rad_sepr", -3);
+		boid_rad_algn.sprite("boid_4_algn_circle");
+		boid_rad_attr.sprite("boid_5_attr_circle");
+		boid_rad_sepr.sprite("boid_6_sepr_circle");
+
+
+		boid_rad_algn.enable(true);
+		boid_rad_attr.enable(true);
+		boid_rad_sepr.enable(true);
+
+		#endregion
+
+
 		#region obj_s_boids
-		
+
 		for (int i = 0; i < obj_s_boids.Length; i += 1)
 		{
 			obj_s_boids[i] = new OBJ_S("boid_" + i.ToString());
@@ -104,12 +128,11 @@ public class DEBUG_BOID_0 : MonoBehaviour
 			{
 				boids[i].accumulated_vel = Vector2.zero;
 
-				boids[i].accumulated_vel += boid_align   (boids, boids[i], 0.20f) * 0.3f;
-				boids[i].accumulated_vel += boid_attract (boids, boids[i], 0.22f) * 0.89f;
-				boids[i].accumulated_vel += boid_seperate(boids, boids[i], 0.25f) * 0.90f;
+				boids[i].accumulated_vel += boid_align   (boids, boids[i], radius_algn) * weight_algn;
+				boids[i].accumulated_vel += boid_attract (boids, boids[i], radius_attr) * weight_attr;
+				boids[i].accumulated_vel += boid_seperate(boids, boids[i], radius_sepr) * weight_sepr;
 
 			}
-
 
 
 			//
@@ -147,6 +170,19 @@ public class DEBUG_BOID_0 : MonoBehaviour
 			for (int i = 0; i < obj_s_boids.Length; i += 1)
 			{
 				obj_s_boids[i].align(boids[i].pos, boids[i].pos + boids[i].vel, scale: false);
+
+				#region obj_s_boids_radius
+				if (i == 0)
+				{
+					boid_rad_algn.POS(boids[i].pos);
+					boid_rad_attr.POS(boids[i].pos);
+					boid_rad_sepr.POS(boids[i].pos);
+
+					boid_rad_algn.SCALE(radius_algn * 2, radius_algn * 2);
+					boid_rad_attr.SCALE(radius_attr * 2, radius_attr * 2);
+					boid_rad_sepr.SCALE(radius_sepr * 2, radius_sepr * 2);
+				}
+				#endregion
 			}
 
 			#endregion
@@ -255,6 +291,54 @@ public class DEBUG_BOID_0 : MonoBehaviour
 			return sum.normalized;
 		else
 			return Vector3.zero;
+
+	}
+
+
+
+
+
+	public static Vector2 boid_align_attract_seperate(BOID[] boids , BOID boid , 
+													   float radius,
+													   float w0, float w1, float w2 )
+	{
+
+
+		bool found_one = false;
+		Vector2 sum = Vector2.zero;
+
+		//
+		for (int i = 0; i < boids.Length; i += 1)
+		{
+			if (boid != boids[i])
+			{
+				//
+				float dist = Z.mag(boids[i].pos - boid.pos);
+				if (dist == 0f) dist = 1f / 1000;
+
+				if (dist <= radius)
+				{
+					sum += boids[i].vel * w0;
+					sum += (boids[i].pos - boid.pos) * w1;
+					sum += (boid.pos - boids[i].pos) / dist * w2;
+
+
+					//
+
+					found_one = true;
+				}
+			}
+
+		}
+
+
+		if (found_one)
+			return sum.normalized;
+		else
+			return Vector3.zero;
+
+
+
 
 	}
 
