@@ -305,6 +305,13 @@ public class DEBUG_BOID_0 : MonoBehaviour
 
 
 
+    public static Vector2 boid_point_force ( BOID boid , Vector2 point , float multiplier )
+    {
+        float dist = Z.sqr_mag( boid.pos - point );
+        
+        return multipler * 1f / (dist * dist);
+    }
+
 
 
 	#endregion
