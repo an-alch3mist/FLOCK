@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -148,19 +148,24 @@ public class DEBUG_BOID_0 : MonoBehaviour
 
 
 
-				float vel = 0.5f;
-				float M_f = 0.2f;
+				float const_vel = 0.5f;
+				
+				
+				float m_f = 0.02f;
+				      M_f = 0.20f;
 
 
 				#region steer
-				Vector2 steer = (boids[i].accumulated_vel * vel - boids[i].vel);
+				// Vector2 steer = (boids[i].accumulated_vel.normalized * const_vel - boids[i].vel); //
+				Vector2 steer = (boids[i].accumulated_vel * const_vel - boids[i].vel);
 				float steer_mag = steer.magnitude;
 				if (steer_mag != 0f)
-					steer = steer / steer_mag * Z.clamp(steer_mag, 0f, M_f);
+					steer = steer / steer_mag * Z.clamp(steer_mag, m_f, M_f);
+					
 				#endregion
 
 
-				boids[i].vel = (boids[i].vel + steer).normalized * vel;
+				boids[i].vel = (boids[i].vel + steer).normalized * const_vel;
 			}
 
 
@@ -204,6 +209,10 @@ public class DEBUG_BOID_0 : MonoBehaviour
 		public Vector2 vel;
 		public Vector2 accumulated_vel;
 	}
+
+
+
+    
 
 
 	#region boid_methods
@@ -297,50 +306,6 @@ public class DEBUG_BOID_0 : MonoBehaviour
 
 
 
-
-	public static Vector2 boid_align_attract_seperate(BOID[] boids , BOID boid , 
-													   float radius,
-													   float w0, float w1, float w2 )
-	{
-
-
-		bool found_one = false;
-		Vector2 sum = Vector2.zero;
-
-		//
-		for (int i = 0; i < boids.Length; i += 1)
-		{
-			if (boid != boids[i])
-			{
-				//
-				float dist = Z.mag(boids[i].pos - boid.pos);
-				if (dist == 0f) dist = 1f / 1000;
-
-				if (dist <= radius)
-				{
-					sum += boids[i].vel * w0;
-					sum += (boids[i].pos - boid.pos) * w1;
-					sum += (boid.pos - boids[i].pos) / dist * w2;
-
-
-					//
-
-					found_one = true;
-				}
-			}
-
-		}
-
-
-		if (found_one)
-			return sum.normalized;
-		else
-			return Vector3.zero;
-
-
-
-
-	}
 
 	#endregion
 
