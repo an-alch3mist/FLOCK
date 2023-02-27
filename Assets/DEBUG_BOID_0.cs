@@ -31,21 +31,24 @@ public class DEBUG_BOID_0 : MonoBehaviour
 	*/
 
 
-	[Range(0.05f, 0.5f)]
+	[Range(0.05f, 1f)]
 	public float radius_algn = 0.20f,
 				 radius_sepr = 0.22f,
-				 radius_attr = 0.25f;
+				 radius_attr = 0.25f,
+				 radius_coll = 0.25f;
 
-	[Range(0.05f, 1f)]
+	[Range(0.05f, 6f)]
 	public float weight_algn = 0.30f,
 				 weight_sepr = 0.89f,
-				 weight_attr = 0.90f;
+				 weight_attr = 0.90f,
+				 weight_coll = 1.00f;
 
 
 
 
 	IEnumerator STIMULATE()
 	{
+
 		#region frame_rate
 		QualitySettings.vSyncCount = 2;
 
@@ -57,7 +60,7 @@ public class DEBUG_BOID_0 : MonoBehaviour
 		OBJ.INITIALIZE_CLEAR_HOLDER();
 
 
-		BOID[] boids = new BOID[350];
+		BOID[] boids = new BOID[300];
 		OBJ_S[] obj_s_boids = new OBJ_S[boids.Length];
 
 
@@ -66,23 +69,27 @@ public class DEBUG_BOID_0 : MonoBehaviour
 
 		Vector2 pred_pos = Vector2.zero;
 		OBJ_S obj_boid_pred = new OBJ_S("boid_pred");
-		obj_boid_pred.enable(true);
+		// obj_boid_pred.enable(true);
 		obj_boid_pred.sprite("boid_0");
-		obj_boid_pred.SCALE(0.3f, 0.3f); 
+		obj_boid_pred.SCALE(0.3f, 0.3f);
 		#endregion
 
 
 
 
-
-
+		#region boids_INITIALIZE
 		for (int i = 0; i < boids.Length; i += 1)
 		{
 			boids[i] = new BOID();
+
+			float rand_X = Random.Range(0.5f, 1f) * ((Random.Range(0, 10) < 4) ? -1 : 1),
+				  rand_Y = Random.Range(0.5f, 1f) * ((Random.Range(0, 10) < 4) ? -1 : 1);
+
+
 			boids[i].vel = new Vector2()
 			{
-				x = Random.Range(-0.5f, 0.5f),
-				y = Random.Range(-0.5f, 0.5f)
+				x = rand_X,
+				y = rand_Y,
 			};
 
 			//
@@ -92,7 +99,8 @@ public class DEBUG_BOID_0 : MonoBehaviour
 				y = Random.Range(-3f, 3f)
 			};
 
-		}
+		} 
+		#endregion
 
 
 		#region obj_s_boids_radius
@@ -100,19 +108,23 @@ public class DEBUG_BOID_0 : MonoBehaviour
 		OBJ_S boid_rad_algn = new OBJ_S("rad_algn", -1);
 		OBJ_S boid_rad_attr = new OBJ_S("rad_attr", -2);
 		OBJ_S boid_rad_sepr = new OBJ_S("rad_sepr", -3);
+		OBJ_S boid_rad_coll = new OBJ_S("rad_coll", -4);
+
 		boid_rad_algn.sprite("boid_4_algn_circle");
 		boid_rad_attr.sprite("boid_5_attr_circle");
 		boid_rad_sepr.sprite("boid_6_sepr_circle");
+		boid_rad_coll.sprite("boid_4_algn_circle");
 
-
+		/*
 		boid_rad_algn.enable(true);
 		boid_rad_attr.enable(true);
 		boid_rad_sepr.enable(true);
-
+		*/
+		boid_rad_coll.enable(true);
 		#endregion
 
 
-		#region obj_s_boids
+		#region obj_s_boids , boids_type
 
 		for (int i = 0; i < obj_s_boids.Length; i += 1)
 		{
@@ -138,7 +150,7 @@ public class DEBUG_BOID_0 : MonoBehaviour
 		for (int i = 0; i < obj_s_boids.Length; i += 1)
 		{
 			obj_s_boids[i].align(boids[i].pos, boids[i].pos + boids[i].vel , scale : false);
-			obj_s_boids[i].SCALE(0.1f , 0.1f);
+			obj_s_boids[i].SCALE(0.15f , 0.15f);
 		}
 
 		#endregion
@@ -152,6 +164,7 @@ public class DEBUG_BOID_0 : MonoBehaviour
 
 
 			#region input_predator_pos
+			/*
 			Vector2 prev_pred_pos = pred_pos;
 
 			float pred_vel = 1f;
@@ -165,6 +178,8 @@ public class DEBUG_BOID_0 : MonoBehaviour
 			if (prev_pred_pos != pred_pos)
 				obj_boid_pred.align(pred_pos, pred_pos + pred_pos - prev_pred_pos);
 
+			*/
+
 			#endregion
 
 
@@ -177,7 +192,9 @@ public class DEBUG_BOID_0 : MonoBehaviour
 				boids[i].accumulated_vel += boid_align   (boids, boids[i], radius_algn) * weight_algn;
 				boids[i].accumulated_vel += boid_attract (boids, boids[i], radius_attr) * weight_attr;
 				boids[i].accumulated_vel += boid_seperate(boids, boids[i], radius_sepr) * weight_sepr;
-				boids[i].accumulated_vel -= boid_point_force(boids[i], pred_pos, radius_sepr * 2) * 1000f;
+				// boids[i].accumulated_vel -= boid_point_force(boids[i], pred_pos, radius_sepr * 2) * 1000f;
+
+				boids[i].accumulated_vel += boid_collide(boids[i], radius_coll) * 100f;
 
 			}
 
@@ -187,31 +204,39 @@ public class DEBUG_BOID_0 : MonoBehaviour
 			{
 				boids[i].pos += boids[i].vel * dt;
 
-
+				#region wrap .... boid_pos
+				/*
 				float w = 3f;
 				if (boids[i].pos.x > +(w + 1f / 10)  ) { boids[i].pos.x = -w; }
 				if (boids[i].pos.x < -(w + 1f / 10 ) ) { boids[i].pos.x = +w; }
 				if (boids[i].pos.y > +(w + 1f / 10 ) ) { boids[i].pos.y = -w; }
 				if (boids[i].pos.y < -(w + 1f / 10 ) ) { boids[i].pos.y = +w; }
 
+				*/ 
+				#endregion
 
 
-				float const_vel = 0.5f;
+				float max_vel = 0.6f;
 
 
-				float m_f = 0.00f,
-					  M_f = 0.10f;
+				float m_f = 0.05f * 1f,
+					  M_f = 0.10f * 1f;
 
 
 				#region steer
 				Vector2 steer = (boids[i].accumulated_vel - boids[i].vel);
 				float steer_mag = steer.magnitude;
 				if (steer_mag != 0f)
-					steer = steer / steer_mag * Z.clamp(steer_mag, m_f, M_f);
+					steer = steer * Z.clamp(steer_mag, m_f, M_f);
+					// steer = steer / steer_mag * Z.clamp(steer_mag, m_f, M_f);
 				#endregion
 
 
-				boids[i].vel = (boids[i].vel + steer).normalized * const_vel;
+
+				Vector2 new_vel = (boids[i].vel + steer);
+				float new_vel_mag = new_vel.magnitude;
+				boids[i].vel = new_vel / new_vel_mag * max_vel;
+
 			}
 
 
@@ -228,10 +253,12 @@ public class DEBUG_BOID_0 : MonoBehaviour
 					boid_rad_algn.POS(boids[i].pos);
 					boid_rad_attr.POS(boids[i].pos);
 					boid_rad_sepr.POS(boids[i].pos);
+					boid_rad_coll.POS(boids[i].pos);
 
 					boid_rad_algn.SCALE(radius_algn * 2, radius_algn * 2);
 					boid_rad_attr.SCALE(radius_attr * 2, radius_attr * 2);
 					boid_rad_sepr.SCALE(radius_sepr * 2, radius_sepr * 2);
+					boid_rad_coll.SCALE(radius_coll * 2, radius_coll * 2);
 				}
 				#endregion
 			}
@@ -256,6 +283,7 @@ public class DEBUG_BOID_0 : MonoBehaviour
 		public Vector2 accumulated_vel;
 
 		public int type = 0;
+		public int attack = 0;
 	}
 
 
@@ -275,6 +303,8 @@ public class DEBUG_BOID_0 : MonoBehaviour
 		{
 			if (boid != boids[i])
 				if (boids[i].type == boid.type)
+				if(boid_angle_check(boid , boids[i]))
+
 				if (Z.sqr_mag(boids[i].pos - boid.pos) <= radius * radius)
 				{
 					sum += boids[i].vel;
@@ -302,6 +332,8 @@ public class DEBUG_BOID_0 : MonoBehaviour
 		{
 			if (boid != boids[i])
 				if (boids[i].type == boid.type)
+				if(boid_angle_check(boid , boids[i]))
+
 				if (Z.sqr_mag(boids[i].pos - boid.pos) <= radius * radius)
 				{
 					sum += (boids[i].pos - boid.pos);
@@ -327,19 +359,22 @@ public class DEBUG_BOID_0 : MonoBehaviour
 		for (int i = 0; i < boids.Length; i += 1)
 		{
 			if (boid != boids[i])
-				if (Z.sqr_mag(boids[i].pos - boid.pos) <= radius * radius)
-				{
-					//
-					float dist = Z.mag(boids[i].pos - boid.pos);
-					if (dist == 0f) dist = 1f / 1000;
+			if(boid_angle_check(boid , boids[i]))
 
-					//
-					sum += (boid.pos - boids[i].pos) / dist * 
-						   ( (boids[i].type != boid.type)? 2 : 1 );
+			if (Z.sqr_mag(boids[i].pos - boid.pos) <= radius * radius)
+			{
+				//
+				float dist = Z.mag(boids[i].pos - boid.pos);
+				if (dist == 0f) dist = 1f / 1000;
 
 
-					found_one = true;
-				}
+				//
+				sum += (boid.pos - boids[i].pos) / dist * 
+					   ( (boids[i].type != boid.type)? 2 : 1 );
+
+
+				found_one = true;
+			}
 
 		}
 
@@ -352,9 +387,19 @@ public class DEBUG_BOID_0 : MonoBehaviour
 	}
 
 
+	public static bool boid_angle_check(BOID curr , BOID other)
+	{
+		float dA = C.PI * 0.6f;
+		float angle = Z.angle(curr.vel, other.pos - curr.pos);
+
+		if(Mathf.Abs(angle) < dA)
+			return true;
+
+		return false;
+	}
 
 
-
+	//
 	public static Vector2 boid_point_force(BOID boid, Vector2 o  , float radius)
 	{
 		float dist = Z.sqr_mag(boid.pos - o);
@@ -365,12 +410,88 @@ public class DEBUG_BOID_0 : MonoBehaviour
 		return Vector2.zero;
 	}
 
+
+	public static Vector2 boid_collide(BOID boid , float radius)
+	{
+
+
+
+		Vector2 dir = boid.vel.normalized;
+
+		int _layer = LayerMask.GetMask("collide_wall");
+	
+
+
+
+		//
+		RaycastHit2D hit = Physics2D.Raycast( boid.pos , 
+											  dir , 
+											  radius ,
+											  _layer);
+
+
+
+
+
+		if (hit.collider != null)
+		{
+
+			/*
+			DRAW.dt = Time.deltaTime;
+			DRAW.col = Color.HSVToRGB(0f, 0f, 0.7f);
+
+			DRAW.LINE(boid.pos , hit.point , 1f/100);
+			*/
+
+
+
+			int N = 10;
+			for(int i = 0; i < N; i += 1)
+			{
+				float angle = C.PI * i * 1f / N;
+				
+				for(int i0 = 1; i0 >= -1; i0 -= 2)
+				{
+
+					Vector2 new_dir = Z.rotate(dir, angle * i0);
+					RaycastHit2D new_hit = Physics2D.Raycast(boid.pos, 
+														    new_dir,
+															 radius,
+															 _layer);
+
+					if (new_hit.collider == null)
+					{
+						return new_dir;
+					}
+						
+
+				}
+
+
+
+
+			}
+
+
+
+
+		}
+		//
+
+		return Vector2.zero;
+	}
+
+
+
+
+
+
 	#endregion
 
 
 
 
-	 
+
 
 
 
@@ -418,9 +539,10 @@ public class DEBUG_BOID_0 : MonoBehaviour
 			float Y = Z.area(n0, n1);
 
 			float a = Mathf.Atan2(Y, X);
+			/*
 			if (a < 0f)
 				a += 2 * C.PI;
-
+			*/
 			return a;
 		}
 		#endregion
@@ -437,6 +559,17 @@ public class DEBUG_BOID_0 : MonoBehaviour
 		}
 		#endregion
 
+
+		#region rotate
+		public static Vector2 rotate(Vector2 v , float angle)
+		{
+			Vector2 nX = v,
+					nY = new Vector2(-v.y , v.x);
+
+			return nX * Mathf.Cos(angle) + nY * Mathf.Sin(angle);
+			//
+		}
+		#endregion
 
 
 		//
@@ -631,6 +764,8 @@ public class DEBUG_BOID_0 : MonoBehaviour
 
 			sr = G.AddComponent<SpriteRenderer>();
 			G.transform.position = new Vector3(0f, 0f, -layer * 1f / 1000);
+
+			enable(false);
 
 		}
 
