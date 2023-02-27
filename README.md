@@ -1,5 +1,9 @@
+![BOID_0](https://user-images.githubusercontent.com/83577810/221520794-aebc33ff-aa6f-44b8-9909-cdf6f0d7a8bb.JPG)
+
+
 ```
 STIMULATE
+
 ```
 
 ``` cs
