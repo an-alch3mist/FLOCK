@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -862,6 +862,9 @@ public class DEBUG_BOID_0 : MonoBehaviour
 
 	#endregion
 
+	// TODO
+	// CREATION , CONTROLS //
+	// CAM , TEXT , OBJ //
 
 
 
