@@ -95,8 +95,8 @@ public class DEBUG_BOID_0 : MonoBehaviour
 			//
 			boids[i].pos = new Vector2()
 			{
-				x = Random.Range(-3f, 3f),
-				y = Random.Range(-3f, 3f)
+				x = Random.Range(-1.5f, +1.5f),
+				y = Random.Range(+0.6f, +2.5f)
 			};
 
 		} 
@@ -119,8 +119,8 @@ public class DEBUG_BOID_0 : MonoBehaviour
 		boid_rad_algn.enable(true);
 		boid_rad_attr.enable(true);
 		boid_rad_sepr.enable(true);
-		*/
 		boid_rad_coll.enable(true);
+		*/
 		#endregion
 
 
@@ -161,6 +161,51 @@ public class DEBUG_BOID_0 : MonoBehaviour
 
 		while(true)
 		{
+			if (Input.GetMouseButtonDown(0))
+			{
+
+				#region fly into grid
+				yield return C.wait_(5);
+
+
+
+				Vector2 m_bound = new Vector2(-1.5f, 0.6f);
+				Vector2 M_bound = new Vector2(+1.5f, 3.5f);
+
+
+				// 20 * 15
+
+				Vector2[] old_pos_1D = new Vector2[boids.Length];
+				Vector2[] new_pos_1D = new Vector2[boids.Length];
+				for (int i0 = 0; i0 < obj_s_boids.Length; i0 += 1)
+				{
+					old_pos_1D[i0] = obj_s_boids[i0].G.transform.position;
+					new_pos_1D[i0] = new Vector2()
+					{
+						x = Z.lerp(m_bound.x, M_bound.x, ((i0 % 20) * 1f / 20)),
+						y = Z.lerp(m_bound.y, M_bound.y, ((int)(i0 / 20) * 1f / 15)),
+					};
+
+
+				}
+
+				for (int i = 0; i < 40; i += 1)
+				{
+					float t = C.EASE(i, 40, ease_type: 1);
+					for (int i0 = 0; i0 < obj_s_boids.Length; i0 += 1)
+					{
+						obj_s_boids[i0].POS(Z.lerp(old_pos_1D[i0], new_pos_1D[i0], t));
+						obj_s_boids[i0].SCALE(Z.lerp(0.15f, 0.1f, t), Z.lerp(0.15f, 0.07f, t));
+
+						boids[i0].pos = Z.lerp(old_pos_1D[i0], new_pos_1D[i0], t);
+					}
+
+					yield return C.wait;
+				}
+				#endregion
+				// break;
+			}
+
 
 
 			#region input_predator_pos
@@ -268,6 +313,19 @@ public class DEBUG_BOID_0 : MonoBehaviour
 
 			yield return null;
 		}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	}
 	//// .................. ////
